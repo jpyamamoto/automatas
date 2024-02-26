@@ -1,7 +1,7 @@
 -- Mathlib: Set y List
 import Mathlib
 -- Paperproof: Pinta las demostraciones de forma bonita
-import Paperproof
+-- import Paperproof
 
 -- Ambiente global de la biblioteca
 namespace AyLF
@@ -42,8 +42,7 @@ instance : Mul (Language α) := ⟨concat⟩
 -- lenguaje L <-> la palabra w es elemento de L.
 lemma word_reverse : w.reverse ∈ l.reverse ↔ w ∈ l := by
   let h (w : Word α) : w.reverse ∈ l ↔ w ∈ (reverse l) := by rfl
-  rw [← h]
-  rw [List.reverse_reverse]
+  rw [← h, List.reverse_reverse]
 
 -- La operación reversa sobre palabras es una involución.
 -- Podemos utilizar este teorema a través de la táctica `simp`.
@@ -75,11 +74,9 @@ lemma not_mem_empty (w : Word α) : w ∉ (∅ : Language α) := by
 theorem empty_concat : (concat ∅ l) = ∅ := by
   rw [Set.eq_empty_iff_forall_not_mem]
   intro x
-  rw [concat]
-  rw [@Set.nmem_setOf_iff (List α) _] -- Basta ver qué elementos cumplen la def de concatenación
+  rw [concat, @Set.nmem_setOf_iff (List α) _] -- Basta ver qué elementos cumplen la def de concatenación
   intro h
-  cases' h with x hx
-  cases' hx with fail _  -- Suponer que hay elementos en ∅ genera una contradicción
+  rcases h with ⟨_, fail, _⟩ -- Suponer que hay elementos en ∅ genera una contradicción
   exact fail
 
 -- Concatenación con vacío por la derecha.
@@ -88,10 +85,7 @@ theorem concat_empty : (concat l ∅) = ∅ := by
   intro x
   rw [concat]
   intro h
-  cases' h with x hx
-  cases' hx with _ hx2
-  cases' hx2 with _ hx3
-  cases' hx3 with fail _  -- Suponer que hay elementos en ∅ genera una contradicción
+  rcases h with ⟨_, _, _, fail, _⟩ -- Suponer que hay elementos en ∅ genera una contradicción
   exact fail
 
 -- El lenguaje { ε } es neutro por la izquierda
@@ -99,22 +93,17 @@ theorem ε_concat : (concat {ε} l) = l := by
   apply Set.eq_of_subset_of_subset -- Doble contención
   . rw [Set.subset_def] -- Contención ⊆
     intro x h
-    simp only [concat] at h
-    rw [@Set.mem_setOf (List α)] at h
-    cases' h with empty h
-    cases' h with he h
+    rw [concat, @Set.mem_setOf (List α)] at h
+    rcases h with ⟨empty, he, h⟩
     rw [Set.mem_singleton_iff] at he -- ε es el único elemento en { ε }
     rw [he] at h
-    cases' h with w h
-    cases' h with hw h -- Concatenación con ε
-    rw [ε] at h
-    rw [List.nil_append w] at h -- Concatenación con `nil` en listas
+    rcases h with ⟨w, hw, h⟩
+    rw [ε, List.nil_append w] at h -- Concatenación con `nil` en listas
     rw [h]
     assumption
   . rw [Set.subset_def] -- Contención ⊇
     intro x h
-    simp only [concat]
-    rw [@Set.mem_setOf (List α)]
+    rw [concat, @Set.mem_setOf (List α)]
     use ε  -- Mostramos existencia con ε
     constructor
     . rfl
@@ -128,33 +117,25 @@ theorem concat_ε : (concat l {ε}) = l := by
   apply Set.eq_of_subset_of_subset -- Doble contención
   . rw [Set.subset_def] -- Contención ⊆
     intro x h
-    simp only [concat] at h
-    rw [@Set.mem_setOf (List α)] at h
+    rw [concat, @Set.mem_setOf (List α)] at h
 
     -- Destruimos iteradamente todas las suposiciones
-    cases' h with w h
-    cases' h with hw h
-    cases' h with empty h
-    cases' h with he h
+    rcases h with ⟨w, hw, empty, hempty, h⟩
 
-    rw [Set.mem_singleton_iff] at he -- ε es el único elemento en { ε }
-    rw [he] at h
-    rw [ε] at h
-    rw [List.append_nil w] at h -- Concatenación con `nil` en listas
+    rw [Set.mem_singleton_iff] at hempty -- ε es el único elemento en { ε }
+    rw [hempty, ε, List.append_nil w] at h -- Concatenación con `nil` en listas
     rw [h]
     assumption
   . rw [Set.subset_def] -- Contención ⊇
     intro x h
-    simp only [concat]
-    rw [@Set.mem_setOf (List α)] -- Basta mostrar que es posible construir w = w ++ ε
+    rw [concat, @Set.mem_setOf (List α)] -- Basta mostrar que es posible construir w = w ++ ε
     use x
     constructor
     . assumption
     . use ε       -- Existencia con ε
       constructor
       . rfl
-      . rw [ε]
-        rw [List.append_nil x]
+      . rw [ε, List.append_nil x]
 
 
 -- La concatenación de lenguajes es asociativa
@@ -162,12 +143,10 @@ theorem concat_assoc : concat l (concat m n) = concat (concat l m) n := by
   apply Set.eq_of_subset_of_subset -- Doble contención
   . rw [Set.subset_def] -- Contención ⊆
     intro w hw
-    rw [concat] at hw
-    rw [@Set.mem_setOf (List α)] at hw
+    rw [concat, @Set.mem_setOf (List α)] at hw
 
     -- Destrucción de hipótesis
-    cases' hw with u h
-    cases' h with hu h
+    rcases hw with ⟨u, hu, h⟩
     rw [concat] at h
     cases' h with v h
 
@@ -176,21 +155,15 @@ theorem concat_assoc : concat l (concat m n) = concat (concat l m) n := by
     rw [@Set.mem_setOf (List α)] at h
 
     -- Destrucción de hipótesis
-    cases' h with h hw
-    cases' h with a ha
-    cases' ha with ha h
-    cases' h with b hb
-    cases' hb with hb hv
+    rcases h with ⟨⟨a, ha, b, hb, hv⟩, hw⟩
 
     rw [hv] at hw
-    rw [concat]
-    rw [@Set.mem_setOf (List α)]
+    rw [concat, @Set.mem_setOf (List α)]
 
     -- Esta es la parte relevante de la prueba:
     use (u ++ a)
     constructor
-    . rw [concat]
-      rw [@Set.mem_setOf (List α)]
+    . rw [concat, @Set.mem_setOf (List α)]
       use u
       constructor
       . assumption
@@ -203,29 +176,20 @@ theorem concat_assoc : concat l (concat m n) = concat (concat l m) n := by
 
   . rw [Set.subset_def] -- Contención ⊇
     intro w h
-    rw [concat] at h
-    rw [@Set.mem_setOf (List α)] at h
+    rw [concat, @Set.mem_setOf (List α)] at h
 
     -- Destrucción de hipótesis
-    cases' h with v h
-    cases' h with hv h
-    cases' h with c h
-    cases' h with hc hw
+    rcases h with ⟨v, hv, c, hc, hw⟩
 
     -- Probar una contención equivale a probar que se cumple la
     -- proposición que genera al conjunto.
-    rw [concat] at hv
-    rw [@Set.mem_setOf (List α)] at hv
+    rw [concat, @Set.mem_setOf (List α)] at hv
 
     -- Destrucción de hipótesis
-    cases' hv with a h
-    cases' h with ha h
-    cases' h with b h
-    cases' h with hb hv
+    rcases hv with ⟨a, ha, b, hb, hv⟩
 
     rw [hv] at hw
-    rw [concat]
-    rw [@Set.mem_setOf (List α)]
+    rw [concat, @Set.mem_setOf (List α)]
 
     -- Esta es la parte relevante de la prueba:
     use a
@@ -233,8 +197,7 @@ theorem concat_assoc : concat l (concat m n) = concat (concat l m) n := by
     . assumption
     . use (b ++ c)
       constructor
-      . rw [concat]
-        rw [@Set.mem_setOf (List α)]
+      . rw [concat, @Set.mem_setOf (List α)]
         use b
         constructor
         . assumption
@@ -247,30 +210,20 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
   apply Set.eq_of_subset_of_subset -- Doble contención
   . rw [Set.subset_def] -- Contención ⊆
     intro w h
-    rw [concat] at h
-    rw [@Set.mem_setOf (List α)] at h
+    rw [concat, @Set.mem_setOf (List α)] at h
 
     -- Destrucción de hipótesis
-    cases' h with u h
-    cases' h with hu h
-    cases' h with v h
-    cases' h with hv h
-    rw [union] at hv
-    rw [@Set.mem_setOf (List α)] at hv
-    rw [union]
-    rw [@Set.mem_setOf (List α)]
+    rcases h with ⟨u, hu, v, hv, h⟩
+    rw [union, @Set.mem_setOf (List α)] at hv ⊢
 
     -- Análisis de casos: unión izquierda, unión derecha
-    cases' hv with h₁ h₂
-    cases' h₁ with a h₁
-    cases' h₁ with ha h₁
+    rcases hv with ⟨a, ha, h₁⟩ | ⟨a, ha, h₂⟩
 
     -- Caso: unión con lenguaje izquierdo
     left
     . use (u ++ v)
       -- Simplificacíon de la meta
-      rw [concat]
-      rw [@Set.mem_setOf (List α)]
+      rw [concat, @Set.mem_setOf (List α)]
       constructor
 
       -- Demostración: se puede construir cadena en la unión
@@ -283,15 +236,11 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
           rw [h₁]
       . assumption
 
-    cases' h₂ with a h₂
-    cases' h₂ with ha h₂
-
     -- Caso: unión con lenguaje derecho
     right
     . use (u ++ v)
       -- Simplificacíon de la meta
-      rw [concat]
-      rw [@Set.mem_setOf (List α)]
+      rw [concat, @Set.mem_setOf (List α)]
       constructor
 
       -- Demostración: se puede construir cadena en la unión
@@ -306,26 +255,19 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
 
   . rw [Set.subset_def] -- Contención ⊇
     intro w h
-    rw [union] at h
-    rw [@Set.mem_setOf (List α)] at h
+    rw [union, @Set.mem_setOf (List α)] at h
 
     -- Análisis de casos: unión izquierda, unión derecha
-    cases' h with h₁ h₂
+    -- y destrucción de hipótesis.
+    rcases h with ⟨v, hv, h₁⟩ | ⟨v, hv, h₂⟩
 
     -- Destrucción de hipótesis
-    . cases' h₁ with v h₁
-      cases' h₁ with hv h₁
-      rw [concat] at hv
-      rw [@Set.mem_setOf (List α)] at hv
-      cases' hv with x h
-      cases' h with hx h
-      cases' h with y h
-      cases' h with hy h
+    . rw [concat, @Set.mem_setOf (List α)] at hv
+      rcases hv with ⟨x, hx, y, hy, h⟩
       rw [h] at h₁
 
       -- Simplificación de la meta
-      rw [concat]
-      rw [@Set.mem_setOf (List α)]
+      rw [concat, @Set.mem_setOf (List α)]
 
       -- Demostración: se puede construir cadena en la unión
       use x
@@ -333,26 +275,18 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
       . assumption
       . use y
         constructor
-        . rw [union]
-          rw [@Set.mem_setOf (List α)]
+        . rw [union, @Set.mem_setOf (List α)]
           left
           use y
         . assumption
 
     -- Destrucción de hipótesis
-    . cases' h₂ with v h₂
-      cases' h₂ with hv h₂
-      rw [concat] at hv
-      rw [@Set.mem_setOf (List α)] at hv
-      cases' hv with x h
-      cases' h with hx h
-      cases' h with y h
-      cases' h with hy h
+    . rw [concat, @Set.mem_setOf (List α)] at hv
+      rcases hv with ⟨x, hx, y, hy, h⟩
       rw [h] at h₂
 
       -- Simplificación de la meta
-      rw [concat]
-      rw [@Set.mem_setOf (List α)]
+      rw [concat, @Set.mem_setOf (List α)]
 
       -- Demostración: se puede construir cadena en la unión
       use x
@@ -360,8 +294,7 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
       . assumption
       . use y
         constructor
-        . rw [union]
-          rw [@Set.mem_setOf (List α)]
+        . rw [union, @Set.mem_setOf (List α)]
           right
           use y
         . assumption
@@ -372,34 +305,24 @@ theorem distr_union_concat : (concat (union m n) l) = union (concat m l) (concat
 
   . rw [Set.subset_def] -- Contención ⊆
     intro w h
-    rw [concat] at h
-    rw [@Set.mem_setOf (List α)] at h
+    rw [concat, @Set.mem_setOf (List α)] at h
 
     -- Destrucción de hipótesis
-    cases' h with u h
-    cases' h with hu h
-    cases' h with v h
-    cases' h with hv h
-    rw [union] at hu
-    rw [@Set.mem_setOf (List α)] at hu
-    rw [union]
-    rw [@Set.mem_setOf (List α)]
+    rcases h with ⟨u, hu, v, hv, h⟩
+    rw [union, @Set.mem_setOf (List α)] at hu ⊢
 
     -- Análisis de casos: unión izquierda, unión derecha
-    cases' hu with h₁ h₂
+    -- y destrucción de hipótesis.
+    rcases hu with ⟨x, hx, h₁⟩ | ⟨x, hx, h₂⟩
 
     -- Caso: unión con lenguaje izquierdo
     . left
-      -- Destrucción de hipótesis
-      cases' h₁ with x h₁
-      cases' h₁ with hx h₁
       rw [h₁] at h
 
       -- Demostración: se puede construir cadena en la unión
       use (x ++ v)
       constructor
-      . rw [concat]
-        rw [@Set.mem_setOf (List α)]
+      . rw [concat, @Set.mem_setOf (List α)]
         use x
         constructor
         . assumption
@@ -408,16 +331,13 @@ theorem distr_union_concat : (concat (union m n) l) = union (concat m l) (concat
 
     -- Caso: unión con lenguaje derecho
     . right
-      -- Destrucción de hipótesis
-      cases' h₂ with x h₂
-      cases' h₂ with hx h₂
       rw [h₂] at h
       use (x ++ v)
 
       -- Demostración: se puede construir cadena en la unión
       constructor
-      . rw [concat]
-        rw [@Set.mem_setOf (List α)]
+      . rw [concat, @Set.mem_setOf (List α)]
+        rw []
         use x
         constructor
         . assumption
@@ -426,50 +346,34 @@ theorem distr_union_concat : (concat (union m n) l) = union (concat m l) (concat
 
   . rw [Set.subset_def] -- Contención ⊇
     intro w h
-    rw [union] at h
-    rw [@Set.mem_setOf (List α)] at h
-    rw [concat]
-    rw [@Set.mem_setOf (List α)]
+    rw [union, @Set.mem_setOf (List α)] at h
+    rw [concat, @Set.mem_setOf (List α)]
 
     -- Análisis de casos: unión izquierda, unión derecha
-    cases' h with h₁ h₂
+    rcases h with ⟨u, h₁⟩ | ⟨u, h₂⟩
 
     -- Destrucción de hipótesis
-    . rw [concat] at h₁
-      cases' h₁ with u h₁
-      rw [@Set.mem_setOf (List α)] at h₁
-      cases' h₁ with h₁ hw
-      cases' h₁ with x h₁
-      cases' h₁ with hx h₁
-      cases' h₁ with y h₁
-      cases' h₁ with hy hu
+    . rw [concat, @Set.mem_setOf (List α)] at h₁
+      rcases h₁ with ⟨⟨x, hx, y, hy, hu⟩, hw⟩
       rw [hu] at hw
 
       -- Demostración: se puede construir cadena en la unión
       use x
       constructor
-      . rw [union]
-        rw [@Set.mem_setOf (List α)]
+      . rw [union, @Set.mem_setOf (List α)]
         left
         use x
       . use y
 
     -- Destrucción de hipótesis
-    . rw [concat] at h₂
-      cases' h₂ with u h₂
-      rw [@Set.mem_setOf (List α)] at h₂
-      cases' h₂ with h₂ hw
-      cases' h₂ with x h₂
-      cases' h₂ with hx h₂
-      cases' h₂ with y h₂
-      cases' h₂ with hy hu
+    . rw [concat, @Set.mem_setOf (List α)] at h₂
+      rcases h₂ with ⟨⟨x, hx, y, hy, hu⟩, hw⟩
       rw [hu] at hw
 
       -- Demostración: se puede construir cadena en la unión
       use x
       constructor
-      . rw [union]
-        rw [@Set.mem_setOf (List α)]
+      . rw [union, @Set.mem_setOf (List α)]
         right
         use x
       . use y
