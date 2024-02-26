@@ -1,7 +1,7 @@
 -- Mathlib: Set y List
 import Mathlib
 -- Paperproof: Pinta las demostraciones de forma bonita
--- import Paperproof
+import Paperproof
 
 -- Ambiente global de la biblioteca
 namespace AyLF
@@ -58,11 +58,11 @@ theorem rev_involutive : l.reverse.reverse = l := by
   rw [Set.subset_def]
   intro x h
   rw [← reverse_involutive]
-  assumption
+  exact h
   rw [Set.subset_def]
   intro a h
   rw [reverse_involutive]
-  assumption
+  exact h
 
 -- No existen palabras en el lenguaje vacío.
 -- Podemos utilizar este teorema a través de la táctica `simp`.
@@ -75,8 +75,7 @@ theorem empty_concat : (concat ∅ l) = ∅ := by
   rw [Set.eq_empty_iff_forall_not_mem]
   intro x
   rw [concat, @Set.nmem_setOf_iff (List α) _] -- Basta ver qué elementos cumplen la def de concatenación
-  intro h
-  rcases h with ⟨_, fail, _⟩ -- Suponer que hay elementos en ∅ genera una contradicción
+  rintro ⟨_, fail, _⟩
   exact fail
 
 -- Concatenación con vacío por la derecha.
@@ -84,8 +83,7 @@ theorem concat_empty : (concat l ∅) = ∅ := by
   rw [Set.eq_empty_iff_forall_not_mem] -- Basta ver qué elementos cumplen la def de concatenación
   intro x
   rw [concat]
-  intro h
-  rcases h with ⟨_, _, _, fail, _⟩ -- Suponer que hay elementos en ∅ genera una contradicción
+  rintro ⟨_, _, _, fail, _⟩ -- Suponer que hay elementos en ∅ genera una contradicción
   exact fail
 
 -- El lenguaje { ε } es neutro por la izquierda
@@ -100,7 +98,7 @@ theorem ε_concat : (concat {ε} l) = l := by
     rcases h with ⟨w, hw, h⟩
     rw [ε, List.nil_append w] at h -- Concatenación con `nil` en listas
     rw [h]
-    assumption
+    exact hw
   . rw [Set.subset_def] -- Contención ⊇
     intro x h
     rw [concat, @Set.mem_setOf (List α)]
@@ -109,7 +107,7 @@ theorem ε_concat : (concat {ε} l) = l := by
     . rfl
     . use x
       constructor
-      . assumption
+      . exact h
       . rfl
 
 -- El lenguaje { ε } es neutro por la derecha
@@ -125,13 +123,13 @@ theorem concat_ε : (concat l {ε}) = l := by
     rw [Set.mem_singleton_iff] at hempty -- ε es el único elemento en { ε }
     rw [hempty, ε, List.append_nil w] at h -- Concatenación con `nil` en listas
     rw [h]
-    assumption
+    exact hw
   . rw [Set.subset_def] -- Contención ⊇
     intro x h
     rw [concat, @Set.mem_setOf (List α)] -- Basta mostrar que es posible construir w = w ++ ε
     use x
     constructor
-    . assumption
+    . exact h
     . use ε       -- Existencia con ε
       constructor
       . rfl
@@ -166,13 +164,13 @@ theorem concat_assoc : concat l (concat m n) = concat (concat l m) n := by
     . rw [concat, @Set.mem_setOf (List α)]
       use u
       constructor
-      . assumption
+      . exact hu
       . use a
     . use b
       constructor
-      . assumption
+      . exact hb
       . rw [List.append_assoc] -- La concatenación de cadenas (listas) es asociativa
-        assumption
+        exact hw
 
   . rw [Set.subset_def] -- Contención ⊇
     intro w h
@@ -194,16 +192,16 @@ theorem concat_assoc : concat l (concat m n) = concat (concat l m) n := by
     -- Esta es la parte relevante de la prueba:
     use a
     constructor
-    . assumption
+    . exact ha
     . use (b ++ c)
       constructor
       . rw [concat, @Set.mem_setOf (List α)]
         use b
         constructor
-        . assumption
+        . exact hb
         . use c
       . rw [← List.append_assoc] -- La concatenación de cadenas (listas) es asociativa
-        assumption
+        exact hw
 
 -- La concatenación distribuye por la izquierda sobre la unión
 theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat l n) := by
@@ -229,12 +227,12 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
       -- Demostración: se puede construir cadena en la unión
       . use u
         constructor
-        . assumption
+        . exact hu
         . use a
           constructor
-          assumption
+          exact ha
           rw [h₁]
-      . assumption
+      . exact h
 
     -- Caso: unión con lenguaje derecho
     right
@@ -246,12 +244,12 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
       -- Demostración: se puede construir cadena en la unión
       . use u
         constructor
-        . assumption
+        . exact hu
         . use a
           constructor
-          assumption
+          exact ha
           rw [h₂]
-      . assumption
+      . exact h
 
   . rw [Set.subset_def] -- Contención ⊇
     intro w h
@@ -272,13 +270,13 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
       -- Demostración: se puede construir cadena en la unión
       use x
       constructor
-      . assumption
+      . exact hx
       . use y
         constructor
         . rw [union, @Set.mem_setOf (List α)]
           left
           use y
-        . assumption
+        . exact h₁
 
     -- Destrucción de hipótesis
     . rw [concat, @Set.mem_setOf (List α)] at hv
@@ -291,13 +289,13 @@ theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat
       -- Demostración: se puede construir cadena en la unión
       use x
       constructor
-      . assumption
+      . exact hx
       . use y
         constructor
         . rw [union, @Set.mem_setOf (List α)]
           right
           use y
-        . assumption
+        . exact h₂
 
 -- La concatenación distribuye por la derecha sobre la unión
 theorem distr_union_concat : (concat (union m n) l) = union (concat m l) (concat n l) := by
@@ -325,9 +323,9 @@ theorem distr_union_concat : (concat (union m n) l) = union (concat m l) (concat
       . rw [concat, @Set.mem_setOf (List α)]
         use x
         constructor
-        . assumption
+        . exact hx
         . use v
-      . assumption
+      . exact h
 
     -- Caso: unión con lenguaje derecho
     . right
@@ -340,9 +338,9 @@ theorem distr_union_concat : (concat (union m n) l) = union (concat m l) (concat
         rw []
         use x
         constructor
-        . assumption
+        . exact hx
         . use v
-      . assumption
+      . exact h
 
   . rw [Set.subset_def] -- Contención ⊇
     intro w h
