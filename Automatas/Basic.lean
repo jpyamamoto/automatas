@@ -57,12 +57,10 @@ theorem rev_involutive : l.reverse.reverse = l := by
   apply Set.eq_of_subset_of_subset
   rw [Set.subset_def]
   intro x h
-  rw [← reverse_involutive]
-  exact h
+  rwa [← reverse_involutive]
   rw [Set.subset_def]
   intro a h
-  rw [reverse_involutive]
-  exact h
+  rwa [reverse_involutive]
 
 -- No existen palabras en el lenguaje vacío.
 -- Podemos utilizar este teorema a través de la táctica `simp`.
@@ -97,8 +95,7 @@ theorem ε_concat : (concat {ε} l) = l := by
     rw [he] at h
     rcases h with ⟨w, hw, h⟩
     rw [ε, List.nil_append w] at h -- Concatenación con `nil` en listas
-    rw [h]
-    exact hw
+    rwa [h]
   . rw [Set.subset_def] -- Contención ⊇
     intro x h
     rw [concat, @Set.mem_setOf (List α)]
@@ -122,8 +119,7 @@ theorem concat_ε : (concat l {ε}) = l := by
 
     rw [Set.mem_singleton_iff] at hempty -- ε es el único elemento en { ε }
     rw [hempty, ε, List.append_nil w] at h -- Concatenación con `nil` en listas
-    rw [h]
-    exact hw
+    rwa [h]
   . rw [Set.subset_def] -- Contención ⊇
     intro x h
     rw [concat, @Set.mem_setOf (List α)] -- Basta mostrar que es posible construir w = w ++ ε
@@ -169,8 +165,7 @@ theorem concat_assoc : concat l (concat m n) = concat (concat l m) n := by
     . use b
       constructor
       . exact hb
-      . rw [List.append_assoc] -- La concatenación de cadenas (listas) es asociativa
-        exact hw
+      . rwa [List.append_assoc] -- La concatenación de cadenas (listas) es asociativa
 
   . rw [Set.subset_def] -- Contención ⊇
     intro w h
@@ -200,8 +195,7 @@ theorem concat_assoc : concat l (concat m n) = concat (concat l m) n := by
         constructor
         . exact hb
         . use c
-      . rw [← List.append_assoc] -- La concatenación de cadenas (listas) es asociativa
-        exact hw
+      . rwa [← List.append_assoc] -- La concatenación de cadenas (listas) es asociativa
 
 -- La concatenación distribuye por la izquierda sobre la unión
 theorem distr_concat_union : (concat l (union m n)) = union (concat l m) (concat l n) := by
